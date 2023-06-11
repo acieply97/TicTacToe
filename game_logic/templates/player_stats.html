@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Statystyki Gracza</title>
+</head>
+<body>
+    <h1>Statystyki gracza za dzień: {{ date }}</h1>
+    <table>
+        <tr>
+            <th>Gracz</th>
+            <th>Wygrane</th>
+            <th>Przegrane</th>
+            <th>Remisy</th>
+        </tr>
+
+        <tr>
+            <td>{{ stats.username }}</td>
+            <td>{{ stats.wins }}</td>
+            <td>{{ stats.losses }}</td>
+            <td>{{ stats.draws }}</td>
+        </tr>
+
+    </table>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kółko i Krzyżyk</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>Kółko i Krzyżyk</h1>
+    <div id="login-area">
+        <h1>Wprowadź nazwę użytkownika</h1>
+        <input type="text" id="username-input">
+        <button id="submit-btn">Login</button>
+    </div>
+    <div id="game_board" hidden="hidden">
+        <h2 id="username"></h2>
+        <div id="game-board">
+            <div class="row">
+                <div class="cell" data-cell-id="0"></div>
+                <div class="cell" data-cell-id="1"></div>
+                <div class="cell" data-cell-id="2"></div>
+            </div>
+            <div class="row">
+                <div class="cell" data-cell-id="3"></div>
+                <div class="cell" data-cell-id="4"></div>
+                <div class="cell" data-cell-id="5"></div>
+            </div>
+            <div class="row">
+                <div class="cell" data-cell-id="6"></div>
+                <div class="cell" data-cell-id="7"></div>
+                <div class="cell" data-cell-id="8"></div>
+            </div>
+        </div>
+
+        <div id="game-info">
+            <p id="credits"></p>
+        </div>
+        <button id="join-btn" class="centered">Join btn</button>
+        <button id="add-credits" class="centered" hidden="hidden">Dodaj 10 kredytów</button>
+        <h1 id="room-name" class="centered"></h1>
+        <p id="player-move" class="centered"></p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+            var cells = document.getElementsByClassName('cell');
+            var creditsElement = document.getElementById('credits');
+            var resultElement = document.getElementById('result');
+
+            const submitButton = document.getElementById('submit-btn');
+            const joinButton = document.getElementById("join-btn");
+            const playerTurnText = document.getElementById("player-move");
+            const addCreditsButton = document.getElementById("add-credits");
+
+            var isYourTurn = false;
+
+            function handleLoginClick(event) {
+                var username = document.getElementById('username-input').value;
+                socket.emit('login', { username: username });
+            }
+
+            function handleAddCreditsClick(event) {
+                socket.emit('add_credits');
+            }
+
+            submitButton.addEventListener('click', handleLoginClick);
+            addCreditsButton.addEventListener('click', handleAddCreditsClick);
+            joinButton.addEventListener("click", handleJoinClick);
+
+            // Funkcja do obsługi logowania
+            socket.on('user_logged', function(data) {
+                var gameBoard = document.getElementById("game_board");
+                var loginArea = document.getElementById("login-area");
+                var username = document.getElementById("username");
+
+                username.textContent = "Uytkownik: " + data.username;
+
+                gameBoard.removeAttribute("hidden");
+
+                loginArea.hidden = true;
+
+            });
+
+            // Funkcja do obsługi kliknięcia komórki
+            function handleCellClick(event) {
+                if (isYourTurn) {
+                    var cellId = event.target.getAttribute('data-cell-id');
+                    socket.emit('play_move', {cellId: cellId, data: myData});
+                    isYourTurn = false;
+                }
+            }
+
+            function handleJoinClick(event) {
+                socket.emit('join_room');
+            }
+
+            // Funkcja do aktualizacji stanu planszy
+            function updateBoardState(boardState) {
+                for (var i = 0; i < cells.length; i++) {
+                    cells[i].textContent = boardState[i];
+                    if (cells[i].textContent === 'x') {
+                        cells[i].classList.remove('o');
+                        cells[i].classList.add('x');
+                    } else if (cells[i].textContent === 'o') {
+                        cells[i].classList.remove('x');
+                        cells[i].classList.add('o');
+                    }
+                }
+            }
+
+            // Funkcja do aktualizacji liczby kredytów
+            function updateCredits(credits) {
+                creditsElement.textContent = "Kredyty: " + credits;
+            }
+
+            // Funkcja do wyświetlania wyniku gry
+            function showGameResult(result) {
+                resultElement.textContent = 'Wynik: ' + result;
+            }
+
+            // Przypisanie obsługi kliknięcia do każdej komórki
+            for (var i = 0; i < cells.length; i++) {
+                cells[i].addEventListener('click', handleCellClick);
+                }
+
+            socket.on('your_turn', function(data) {
+                isYourTurn = true;
+
+                var playerTurn = document.getElementById('player-move');
+                playerTurn.textContent = "Twoj ruch";
+
+                myData = data;
+            });
+
+            socket.on('opponent_move', function(data) {
+                var playerTurn = document.getElementById('player-move');
+                playerTurn.textContent = "Ruch przeciwnika";
+            });
+
+            socket.on('connect', function() {
+
+            });
+
+            // Obsługa aktualizacji tablicy gry
+            socket.on('game_state', function(data) {
+                updateBoardState(data.board_state);
+            });
+
+            // Obsługa opuszczania pokoju
+            socket.on('leave_room', function(data) {
+                var roomName = document.getElementById("room-name");
+                roomName.textContent = ""
+
+                updateBoardState(data.board_state);
+            });
+
+            // Aktualizacja kredytów
+            socket.on('update_credits', function(data) {
+                updateCredits(data.credits);
+            });
+
+            // Obsługa końca gry - przegrana
+            socket.on('game_loss', function() {
+                joinButton.hidden = false;
+                playerTurnText.hidden = true;
+
+                alert('Przegrałeś grę!');
+                showGameResult(data.result);
+            });
+
+            // Obsługa końca gry - wygrana
+            socket.on('game_win', function() {
+                joinButton.hidden = false;
+                playerTurnText.hidden = true;
+
+                alert('Wygrałeś grę!');
+                showGameResult(data.result);
+
+            });
+
+            // Obsługa końca gry - remis
+            socket.on('game_draw', function() {
+                joinButton.hidden = false;
+                playerTurnText.hidden = true;
+
+                alert('Remis!');
+            });
+
+            // Obsługa uruchamiająca grę
+            socket.on('start-game', function(data) {
+                addCreditsButton.hidden = true;
+                playerTurnText.hidden = false;
+
+                socket.emit('start_game', data);
+            });
+
+            // Obsługa dołączania do pokoju
+            socket.on('joined_room', function(data) {
+                var roomName = document.getElementById("room-name");
+                roomName.hidden = false;
+                roomName.textContent = "Pokój: " + data.room
+                joinButton.hidden = true;
+                updateCredits(data.credits);
+            });
+
+            // Obsługa zmiany ruchu
+            socket.on('make_move', function(data) {
+                socket.emit('choose_player', data);
+            });
+
+            socket.on('not_enough_credits', function() {
+                creditsElement.textContent = "Niewystarczająco kredytów";
+                addCreditsButton. hidden  = false;
+            });
+
+            socket.on('hide_add_credits_button', function(data) {
+                addCreditsButton.hidden = true;
+                updateCredits(data.credits);
+            });
+
+            socket.on('player_in_session', function() {
+                alert('Gracz jest już w grze');
+            });
+        });
+    </script>
+</body>
+</html>

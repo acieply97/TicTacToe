@@ -1,0 +1,49 @@
+h1, h2 {
+    text-align: center;
+}
+
+.centered {
+    text-align: center;
+}
+
+#game-board {
+    margin: 20px auto;
+    width: 300px;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+}
+
+.cell {
+    width: 80px;
+    height: 80px;
+    border: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    cursor: pointer;
+}
+
+#game-info {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#credits {
+    font-weight: bold;
+}
+
+#result {
+    font-weight: bold;
+}
+
+.x {
+  color: red;
+}
+
+.o {
+  color: blue;
+}
