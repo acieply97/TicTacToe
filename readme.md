@@ -36,4 +36,5 @@ Gracz po wpisaniu nazwy użytkownika posiada 10 kredytów. W trakcie przyłącza
 Użytkownik może sprawdzić swoje statystyki za dany dzień wpisując adres **/stats/RRRR-MM-DD/Username** gdzie **RRRR-MM-DD** - data, w kótrej mają być pokazane statystyki, **Username** - nazwa gracza.
 
 ## Uwagi
-Nie zdążono zabezpieczyć projektu, użyć dotenv. Problem z włączeniem aplikacji w dokerze
+Nie zdążono zabezpieczyć projektu, użyć dotenv. Problem z włączeniem aplikacji w dokerze, Brak testów jednostkowych
+
